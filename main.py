@@ -2,6 +2,7 @@ import os
 import requests
 import copy
 import csv 
+import synonymes
 
 al_moufta7 = "2b10OOVqKH3mbCUeCnWRXXqc5"
 dataset_path = 'dataset'
@@ -49,7 +50,7 @@ def fill_dictionary(selected_folder):
     c = 0
     dirs = os.listdir(folder_path)
     for image_name in dirs:
-        print(f'Progress: {c}/{len(dirs)} ')
+        print(f'Progress: {c+1}/{len(dirs)} ')
         image_path = os.path.join(folder_path, image_name)
 
         dataset.append(api_call(image_path, selected_folder,image_name))
@@ -108,18 +109,22 @@ def process_dataset(dataset, folder_name):
     output_list = []
     for e in dataset:
         output_element[1] = e[1]
-        output_element[2] = species == e[0]["results"][0]["species"]["scientificNameWithoutAuthor"]
+        output_element[2] = species == (e[0]["results"][0]["species"]["scientificNameWithoutAuthor"]) or (e[0]["results"][0]["species"]["scientificNameWithoutAuthor"] in synonymes.synonymes[species])
         output_element[3] = genus == e[0]["results"][0]["species"]["genus"]["scientificNameWithoutAuthor"]
         output_element[5] = e[0]["results"][0]["species"]["scientificNameWithoutAuthor"]
         output_element[6] = e[0]["results"][0]["score"]
         c = 0
         for result in e[0]["results"]:
             c += 1
-            if result["species"]["scientificNameWithoutAuthor"] == species:
+            if (result["species"]["scientificNameWithoutAuthor"] == species) or (result["species"]["scientificNameWithoutAuthor"] in synonymes.synonymes[species]):
                 break
             elif c == 5:
                 c = 0
-        output_element[4] = c
+        
+
+        if c != 0:
+            output_element[4] = 6 - c
+        else: output_element[4] = 0
 
         if c != 0:
             output_element[7] = e[0]["results"][c-1]["score"]
